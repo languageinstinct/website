@@ -68,3 +68,15 @@ function makePublicURL() {
   // in `import.meta.env.PUBLIC_URL`.
   return `https://${DEPLOYMENT_ALIAS}`;
 }
+
+
+// ...rest of your code
+
+if (ogImage) {
+  // Make sure PUBLIC_URL is defined, otherwise use a default URL
+  const baseUrl = import.meta.env.PUBLIC_URL || 'https://default-url.com';
+  ogImage = ogImage.startsWith("/api/og")
+    ? new URL(ogImage, baseUrl).href
+    : ogImage;
+}
+
