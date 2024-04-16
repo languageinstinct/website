@@ -42,7 +42,8 @@
     "unified": "^10",
     "unist-util-visit": "^5.0.0",
     "vercel": "^32.2.1",
-    "yargs-parser": "^21.1.1"
+    "yargs-parser": "^21.1.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@astrojs/rss": "^3.0.0",
