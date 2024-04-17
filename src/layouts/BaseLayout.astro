@@ -20,10 +20,10 @@ interface Props {
   title: string;
   description: string;
   children: astroHTML.JSX.Element;
-  ogImage?: string;
+ 
 }
 
-const { title, description, ogImage } = Astro.props;
+const { title, description } = Astro.props;
 
 const posts = (await Astro.glob<PostFrontmatter>("../../posts/**/*.mdx"))
   .filter((p) => (import.meta.env.PROD ? !p.frontmatter.draft : true))
@@ -55,7 +55,7 @@ posts.sort((a, b) => {
       ))
     }
 
-    <SocialCardMetaTags ogImage={ogImage} />
+    
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
