@@ -50,8 +50,8 @@ dependencies:
     specifier: ^3.0.1
     version: 3.0.1(eslint@8.49.0)
   estree-util-value-to-estree:
-    specifier: ^3.0.1
-    version: 3.0.1
+    specifier: ^3.1.2
+    version: 3.1.2
   plaiceholder:
     specifier: ^3.0.0
     version: 3.0.0(sharp@0.32.5)
@@ -3607,12 +3607,10 @@ packages:
       source-map: 0.7.4
     dev: false
 
-  /estree-util-value-to-estree@3.0.1:
-    resolution: {integrity: sha512-b2tdzTurEIbwRh+mKrEcaWfu1wgb8J1hVsgREg7FFiecWwK/PhO8X0kyc+0bIcKNtD4sqxIdNoRy6/p/TvECEA==}
-    engines: {node: '>=16.0.0'}
+  /estree-util-value-to-estree@3.1.2:
+    resolution: {integrity: sha512-S0gW2+XZkmsx00tU2uJ4L9hUT7IFabbml9pHh2WQqFmAbxit++YGZne0sKJbNwkj9Wvg9E4uqWl4nCIFQMmfag==}
     dependencies:
       '@types/estree': 1.0.1
-      is-plain-obj: 4.1.0
     dev: false
 
   /estree-util-visit@1.2.1:
