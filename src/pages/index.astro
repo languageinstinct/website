@@ -95,7 +95,7 @@ posts.sort((a, b) => {
     </div>
   </section>
 
-    <script is:inline>
+<script is:inline>
   window.askAI = async function() {
     const q = document.getElementById("query").value.trim();
     const output = document.getElementById("output");
@@ -121,11 +121,14 @@ posts.sort((a, b) => {
       }
 
       const data = await res.json();
+      console.log("Response data:", data); // <- logs backend data to console
 
       if (data.type === "blog") {
         output.innerHTML = `
           <h3 class="text-xl font-semibold">${data.title}</h3>
-          <p class="text-gray-700 dark:text-gray-300 mt-2">${data.text}</p>`;
+          <p class="text-gray-700 dark:text-gray-300 mt-2">${data.text}</p>
+          <img src="/images/${data.image}" alt="${data.title}" 
+     class="rounded-md w-full max-w-md mt-4 mx-auto block">`;
       } else if (data.type === "weather") {
         output.innerHTML = `
           <p class="text-gray-700 dark:text-gray-300 mt-2">
@@ -140,6 +143,7 @@ posts.sort((a, b) => {
     }
   }
 </script>
+
 
 
 
