@@ -1,0 +1,102 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { formatDate } from "../lib/formatDate";
+import { Link } from "../lib/Link";
+import { Paragraph } from "../lib/prose/Paragraph";
+import type { PostFrontmatter } from "../types";
+
+let posts = await Astro.glob<PostFrontmatter>("../../posts/**/*.mdx");
+
+if (import.meta.env.PROD) {
+  posts = posts.filter((post) => !post.frontmatter.draft);
+}
+
+posts.sort((a, b) => {
+  return (
+    new Date(b.frontmatter.date).getTime() -
+    new Date(a.frontmatter.date).getTime()
+  );
+});
+---
+
+<BaseLayout
+  title="AidanGantt"
+  description="My personal website "
+>
+  <h1 slot="header-content" class="text-gray-600 dark:text-gray-500">aidan</h1>
+  <main class="py-10 zaduma-prose">
+    <Paragraph>
+      <small class="text-gray-600 dark:text-gray-500"
+        >IPA: /ˈeɪdən/</small
+      >
+      <br />
+       Hello, I'm <strong>Aidan</strong>. I made this small website. I am an 22 y/o <strong>Information Systems</strong> ndergrad student. I enjoy learning, traveling, photography, reading, and problem-solving. 
+    </Paragraph>
+    <blockquote>
+      "An investment in knowledge pays the best interest."
+      <footer>&mdash; Benjamin Franklin</footer>
+    </blockquote> 
+       
+    <Paragraph>
+
+    </Paragraph>
+  </main>
+  <ul>
+    {
+      posts.map(({ frontmatter }) => {
+        const date = new Date(frontmatter.date);
+
+        return (
+          <li>
+            <Link
+              href={frontmatter.path}
+              class="flex flex-row gap-2 justify-between"
+              noUnderline
+            >
+              <h2 class="text-gray-800 dark:text-gray-300 font-sans">
+                {frontmatter.title}
+              </h2>
+              <time
+                datetime={date.toISOString()}
+                class="text-gray-600 dark:text-gray-400 tabular-nums tracking-tighter shrink-0"
+              >
+                {formatDate(date)}
+              </time>
+            </Link>
+          </li>
+        );
+      })
+    }
+  </ul>
+    <section class="py-12 border-t border-gray-300 dark:border-gray-700 mt-12">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+      Discover Korea with AI
+    </h2>
+    <p class="mb-4 text-gray-600 dark:text-gray-400">
+      Type something you want to do in Korea (e.g., spa, cafe, park) and my site will show one of my blog posts. You can then ask about the weather for your trip.
+    </p>
+
+    <div class="flex flex-col gap-4 max-w-xl">
+      <input
+        id="query"
+        type="text"
+        placeholder="Try: spa"
+        class="border border-gray-400 rounded-md p-2 dark:bg-gray-800 dark:text-gray-100"
+      />
+      <button
+        onclick="askAI()"
+        class="bg-gray-900 text-white py-2 rounded-md hover:bg-gray-700 transition"
+      >
+        Search
+      </button>
+      <div id="output
+
+  <style>
+    ul:hover li:not(:hover) :where(h2, time) {
+      @apply text-gray-600 transition-colors;
+      :global(.dark) & {
+        @apply text-gray-500;
+      }
+    }
+  </style>
+</BaseLayout>
