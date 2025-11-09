@@ -26,26 +26,25 @@ posts.sort((a, b) => {
   <h1 slot="header-content" class="text-gray-600 dark:text-gray-500">aidan</h1>
   <main class="py-10 zaduma-prose">
     <Paragraph>
-      <small class="text-gray-600 dark:text-gray-500"
-        >IPA: /ˈeɪdən/</small
-      >
+      <small class="text-gray-600 dark:text-gray-500">IPA: /ˈeɪdən/</small>
       <br />
-       Hello, I'm <strong>Aidan</strong>. I made this small website. I am an 22 y/o <strong>Information Systems</strong> ndergrad student. I enjoy learning, traveling, photography, reading, and problem-solving. 
+      Hello, I'm <strong>Aidan</strong>. I made this small website. I am a 22 y/o
+      <strong>Information Systems</strong> undergrad student. I enjoy learning,
+      traveling, photography, reading, and problem-solving.
     </Paragraph>
+
     <blockquote>
       "An investment in knowledge pays the best interest."
       <footer>&mdash; Benjamin Franklin</footer>
-    </blockquote> 
-       
-    <Paragraph>
+    </blockquote>
 
-    </Paragraph>
+    <Paragraph></Paragraph>
   </main>
+
   <ul>
     {
       posts.map(({ frontmatter }) => {
         const date = new Date(frontmatter.date);
-
         return (
           <li>
             <Link
@@ -68,12 +67,15 @@ posts.sort((a, b) => {
       })
     }
   </ul>
-    <section class="py-12 border-t border-gray-300 dark:border-gray-700 mt-12">
+
+  <!-- AI Section -->
+  <section class="py-12 border-t border-gray-300 dark:border-gray-700 mt-12">
     <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
       Discover Korea with AI
     </h2>
     <p class="mb-4 text-gray-600 dark:text-gray-400">
-      Type something you want to do in Korea (e.g., spa, cafe, park) and my site will show one of my blog posts. You can then ask about the weather for your trip.
+      Type something you want to do in Korea (e.g., spa, cafe, park) and my site
+      will show one of my blog posts. You can then ask about the weather for your trip.
     </p>
 
     <div class="flex flex-col gap-4 max-w-xl">
@@ -89,7 +91,57 @@ posts.sort((a, b) => {
       >
         Search
       </button>
-      <div id="output"
+      <div id="output" class="mt-6 space-y-4"></div>
+    </div>
+  </section>
+
+    <script is:inline>
+  window.askAI = async function() {
+    const q = document.getElementById("query").value.trim();
+    const output = document.getElementById("output");
+
+    if (!q) {
+      output.innerHTML = "Please type something first.";
+      return;
+    }
+
+    output.innerHTML = "Thinking...";
+
+    try {
+      const res = await fetch("https://algaib-travel-backend.hf.space/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        output.innerHTML = `Error ${res.status}: ${txt}`;
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.type === "blog") {
+        output.innerHTML = `
+          <h3 class="text-xl font-semibold">${data.title}</h3>
+          <p class="text-gray-700 dark:text-gray-300 mt-2">${data.text}</p>`;
+      } else if (data.type === "weather") {
+        output.innerHTML = `
+          <p class="text-gray-700 dark:text-gray-300 mt-2">
+            <strong>Weather:</strong> ${data.content}
+          </p>`;
+      } else {
+        output.innerHTML = "No response.";
+      }
+    } catch (err) {
+      console.error(err);
+      output.innerHTML = `Error: ${err}`;
+    }
+  }
+</script>
+
+
 
   <style>
     ul:hover li:not(:hover) :where(h2, time) {
