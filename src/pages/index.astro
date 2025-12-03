@@ -13,15 +13,15 @@ import { Paragraph } from "../lib/prose/Paragraph";
 
   <main class="py-10 zaduma-prose">
     <Paragraph>
-      This page is a simple front end for an AI-powered search API. The data
-      lives in JSON files on the backend. When a user types a request here, the
-      page sends it to the backend, which finds the most relevant internal
-      record using text similarity.
+      This page hits my backend API and pulls whatever internal record is the
+      closest match. The backend reads a bunch of JSON files and does the
+      similarity stuff.
     </Paragraph>
 
     <Paragraph>
-      The backend returns the best match as a title, a text summary, and an
-      image. The frontend simply displays the result.
+      When you search, the backend returns a title, text, and a location.
+      Location matters because I added a second component that fetches live
+      weather using that location.
     </Paragraph>
 
     <section class="py-8 border-t border-gray-300 dark:border-gray-700 mt-10">
@@ -29,45 +29,55 @@ import { Paragraph } from "../lib/prose/Paragraph";
         Search Internal Records
       </h2>
       <p class="mb-4 text-gray-600 dark:text-gray-400">
-        Type a question such as
-        <em>"client feedback summary"</em>,
-        <em>"support case escalation"</em>, or
-        <em>"training session notes"</em>. The backend returns the closest
-        matching internal record based on the content of our stored data.
+        Try something like: <em>"client feedback"</em>,
+        <em>"support ticket"</em>, or <em>"training session"</em>.  
+        The backend will find the closest record out of the files I gave it.
       </p>
 
       <div class="flex flex-col gap-4 max-w-xl">
+        <!-- user query input -->
         <input
           id="query"
           type="text"
           placeholder="Search internal experience records..."
           class="border border-gray-400 rounded-md p-2 dark:bg-gray-800 dark:text-gray-100"
         />
+
+        <!-- button that triggers the backend search -->
         <button
           onclick="askAI()"
           class="bg-gray-900 text-white py-2 rounded-md hover:bg-gray-700 transition"
         >
           Run Search
         </button>
+
+        <!-- where results show up -->
         <div id="output" class="mt-6 space-y-4"></div>
       </div>
     </section>
   </main>
 
   <script is:inline>
+    const BACKEND_URL = "https://algaib-travel-backend.hf.space";
+
+    // store the last matched record so the weather tool can use its location
+    let lastResult = null;
+
+    // runs the RAG query endpoint
     window.askAI = async function () {
       const q = document.getElementById("query").value.trim();
       const output = document.getElementById("output");
 
       if (!q) {
-        output.innerHTML = "Please enter a query to search the records.";
+        output.innerHTML = "Please enter a query.";
         return;
       }
 
       output.innerHTML = "Searching internal records...";
+      lastResult = null;
 
       try {
-        const res = await fetch("https://algaib-travel-backend.hf.space/query", {
+        const res = await fetch(`${BACKEND_URL}/query`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: q }),
@@ -80,15 +90,38 @@ import { Paragraph } from "../lib/prose/Paragraph";
         }
 
         const data = await res.json();
-        console.log("Response data:", data);
+        lastResult = data;
 
+        // format the result for display
         if (data.type === "blog") {
+          const loc = data.location && data.location !== "none"
+            ? data.location
+            : "Not specified";
+
           output.innerHTML = `
             <h3 class="text-xl font-semibold">Matched Record</h3>
             <h4 class="text-lg font-semibold">${data.title}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-2">
               ${data.text}
             </p>
+
+            <p class="text-gray-600 dark:text-gray-400 mt-2">
+              <strong>Location:</strong> ${loc}
+            </p>
+
+            ${
+              loc !== "Not specified"
+                ? `<button
+                     onclick="getWeather()"
+                     class="mt-3 bg-gray-900 text-white py-2 px-3 rounded-md hover:bg-gray-700 transition"
+                   >
+                     Get weather for this location
+                   </button>`
+                : ""
+            }
+
+            <div id="weather-output" class="mt-4"></div>
+
             <hr class="my-4 border-gray-300 dark:border-gray-700" />
           `;
         } else {
@@ -97,6 +130,43 @@ import { Paragraph } from "../lib/prose/Paragraph";
       } catch (err) {
         console.error(err);
         output.innerHTML = `Error: ${err}`;
+      }
+    };
+
+    // calls the weather tool using the record’s location
+    window.getWeather = async function () {
+      const weatherDiv = document.getElementById("weather-output");
+
+      if (!lastResult || !lastResult.location || lastResult.location === "none") {
+        weatherDiv.innerHTML = "No valid location.";
+        return;
+      }
+
+      weatherDiv.innerHTML = "Getting weather...";
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/weather`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ location: lastResult.location }),
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          weatherDiv.innerHTML = `Error: ${data.error}`;
+          return;
+        }
+
+        // display weather data in a simple way
+        weatherDiv.innerHTML = `
+          <h4 class="text-lg font-semibold">Current Weather</h4>
+          <p>Temperature: ${data.current_weather.temperature}°C</p>
+          <p>Wind Speed: ${data.current_weather.windspeed} km/h</p>
+        `;
+      } catch (err) {
+        console.error(err);
+        weatherDiv.innerHTML = `Error: ${err}`;
       }
     };
   </script>
