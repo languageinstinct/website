@@ -4,48 +4,36 @@ import { Paragraph } from "../lib/prose/Paragraph";
 ---
 
 <BaseLayout
-  title="Experience Intelligence Portal"
-  description="Internal portal for business teams to search and retrieve curated experience records and insights."
+  title="Experience Search Portal"
+  description="Simple internal tool for searching example experience records with an AI backend."
 >
   <h1 slot="header-content" class="text-gray-600 dark:text-gray-500">
-    Experience Intelligence Portal
+    Experience Search Portal
   </h1>
 
   <main class="py-10 zaduma-prose">
     <Paragraph>
-      This portal acts as a business-facing knowledge system for organizing and
-      retrieving curated experience records, locations, and insights. It is
-      intended for use by client-facing teams, account managers, or operations
-      groups who need fast access to reliable information when responding to
-      inquiries or planning engagements.
+      This page is a simple front end for an AI-powered search API. The data
+      lives in JSON files on the backend. When a user types a request here, the
+      page sends it to the backend, which finds the most relevant internal
+      record using text similarity.
     </Paragraph>
-
-    <blockquote>
-      "Accurate information is the foundation of good decision-making."
-      <footer>&mdash; Internal Operations Principle</footer>
-    </blockquote>
 
     <Paragraph>
-      Instead of manually searching through scattered notes or documents, teams
-      can use this portal to query an internal experience database. The system
-      surfaces the most relevant write-ups and supporting context (such as
-      weather or other conditions), helping organizations answer questions
-      quickly and keep their communication consistent and professional.
+      The backend returns the best match as a title, a text summary, and an
+      image. The frontend simply displays the result.
     </Paragraph>
 
-    <section class="py-12 border-t border-gray-300 dark:border-gray-700 mt-12">
+    <section class="py-8 border-t border-gray-300 dark:border-gray-700 mt-10">
       <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
-        Experience Search Interface (Internal Use)
+        Search Internal Records
       </h2>
       <p class="mb-4 text-gray-600 dark:text-gray-400">
-        This search bar lets company teams query internal experience records
-        like a lightweight knowledge base. Type a business-style or client-style
-        request (for example:
-        <em>"client wants a spa day"</em>,
-        <em>"need a casual cafe near a park"</em>, or
-        <em>"sample activities around a stadium"</em>). The system scans the
-        curated records and returns the closest matching brief, along with
-        optional supporting information to help with planning and client calls.
+        Type a question such as
+        <em>"client feedback summary"</em>,
+        <em>"support case escalation"</em>, or
+        <em>"training session notes"</em>. The backend returns the closest
+        matching internal record based on the content of our stored data.
       </p>
 
       <div class="flex flex-col gap-4 max-w-xl">
@@ -59,7 +47,7 @@ import { Paragraph } from "../lib/prose/Paragraph";
           onclick="askAI()"
           class="bg-gray-900 text-white py-2 rounded-md hover:bg-gray-700 transition"
         >
-          Search Internal Records
+          Run Search
         </button>
         <div id="output" class="mt-6 space-y-4"></div>
       </div>
@@ -72,12 +60,11 @@ import { Paragraph } from "../lib/prose/Paragraph";
       const output = document.getElementById("output");
 
       if (!q) {
-        output.innerHTML =
-          "Please enter a business-style or client-style request to search internal records.";
+        output.innerHTML = "Please enter a query to search the records.";
         return;
       }
 
-      output.innerHTML = "Searching internal experience records...";
+      output.innerHTML = "Searching internal records...";
 
       try {
         const res = await fetch("https://algaib-travel-backend.hf.space/query", {
@@ -97,30 +84,15 @@ import { Paragraph } from "../lib/prose/Paragraph";
 
         if (data.type === "blog") {
           output.innerHTML = `
-            <h3 class="text-xl font-semibold">Matched Experience Record</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              Retrieved internal brief:
-            </p>
+            <h3 class="text-xl font-semibold">Matched Record</h3>
             <h4 class="text-lg font-semibold">${data.title}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-2">
               ${data.text}
             </p>
-            <img
-              src="/images/${data.image}"
-              alt="${data.title}"
-              class="rounded-md w-full max-w-md mt-4 mx-auto block"
-            >
-          `;
-        } else if (data.type === "weather") {
-          output.innerHTML = `
-            <h3 class="text-xl font-semibold">Supporting Information</h3>
-            <p class="text-gray-700 dark:text-gray-300 mt-2">
-              <strong>Context for planning:</strong> ${data.content}
-            </p>
+            <hr class="my-4 border-gray-300 dark:border-gray-700" />
           `;
         } else {
-          output.innerHTML =
-            "No useful record found. Try rephrasing the request or using more specific details.";
+          output.innerHTML = "No matching record found.";
         }
       } catch (err) {
         console.error(err);
