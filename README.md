@@ -3,20 +3,46 @@ Experience Intelligence Portal
 INFO 452 – Final Project
 Built by Aidan Gantt
 
+Where the Main Frontend Code Lives
+
+All project logic for the frontend lives in:
+
+src/pages/index.astro
+
+
+This file contains:
+
+the search bar
+
+the JavaScript that makes the POST request to /query
+
+the automatic weather request to /weather
+
+the rendering logic for displaying results
+
+Every other frontend folder (layouts, prose, lib, global CSS, etc.) is part of my Astro site template.
+They only manage layout, fonts, and styling.
+They do not contain any project logic and were not modified for this assignment.
+
 Overview
 
-This project is a lightweight internal search assistant. A user can type a natural sentence like “find the client feedback file” or “show me the support ticket notes”, and the system returns the closest matching internal record.
+This project is a lightweight internal search assistant. A user can type a natural sentence like:
 
-The backend reads a collection of JSON “internal documents,” searches through them with TF-IDF + cosine similarity, and returns the best match.
-After a record is found, the system automatically pulls live weather data for the location listed in that record.
+“find the client feedback file”
 
-The final output shows:
+“show me the support ticket notes”
 
-the best-matching record
+and the system returns the closest matching internal document.
+
+The backend searches through a collection of JSON “internal records” using TF-IDF and cosine similarity. After finding the best match, the system automatically fetches live weather for the location in that record.
+
+The frontend displays:
+
+the best matching record
 
 the record’s location
 
-live weather at that location
+the current weather at that location
 
 Components Used
 
@@ -24,39 +50,39 @@ Astro frontend (this repo)
 
 FastAPI backend (Hugging Face Space)
 
-TF-IDF + cosine similarity (manual RAG-style retrieval)
+TF-IDF + cosine similarity (RAG)
 
 JSON files acting as the document bank
 
-Weather API using Open-Meteo (geocoding + forecast)
+Weather API using Open-Meteo (geocoding + current weather)
 
-The frontend and backend communicate using a simple POST API.
+The frontend and backend communicate using simple POST API calls.
 
 Architecture
 Frontend
 
-Shows the search bar
+Renders the search bar
 
-Sends the query to the backend’s /query endpoint
+Sends the query to /query
 
-Displays the matched document
+Displays the returned record
 
-Automatically calls /weather using the returned location
+Automatically calls /weather using the record’s location
 
 Backend
 
 Loads all JSON documents on startup
 
-Creates a TF-IDF matrix once
+Builds a TF-IDF matrix
 
-Uses cosine similarity for search
+Uses cosine similarity to rank results
 
-Light keyword-boosting rules for better accuracy
+Uses small keyword boosts for more natural results
 
-Weather endpoint uses geocoding + live forecast
+Calls geocoding + weather APIs for live weather
 
 API Endpoints
-POST /query     → returns matched internal record
+POST /query     → returns matched internal record  
 POST /weather   → returns live weather for that record’s location
 
 
@@ -66,7 +92,7 @@ https://algaib-travel-backend.hf.space
 How the System Works
 1. Data (JSON Files)
 
-Each internal record looks like:
+Each internal record is a simple JSON file like:
 
 {
   "title": "client feedback summary",
@@ -76,61 +102,60 @@ Each internal record looks like:
 }
 
 
-These are loaded once at startup and stored in memory.
+These load into memory at backend startup.
 
-2. RAG-Style Retrieval (TF-IDF + Cosine Similarity)
+2. Retrieval Logic (TF-IDF + Cosine Similarity)
 
 The backend uses:
 
 TfidfVectorizer(stop_words="english")
-
-vectorizer.fit_transform(docs)
-
 cosine_similarity(query_vector, X)
 
-There are small keyword boosts:
 
-“client + feedback” → feedback docs
+Small keyword boosts help guide results:
 
-“support + ticket” → support docs
+“client” + “feedback” → feedback files
 
-“training + session” → training docs
+“support” + “ticket” → support files
 
-This improves results without needing a full ML model.
+“training” + “session” → training files
+
+This provides consistent, explainable behavior without needing a large ML model.
 
 3. Weather API (Open-Meteo)
 
-The weather endpoint does two things
+The weather endpoint performs two steps:
 
-Convert the record’s location name → latitude/longitude
-using Open-Meteo’s free geocoding API
+Step 1 — Geocoding:
+Convert a location name to latitude/longitude
 
-Use those coordinates to request current weather data
+Step 2 — Weather:
+Fetch current temperature and wind at those coordinates
 
-Example returned JSON:
+Example response:
 
 {
   "location": "New York",
   "latitude": 40.7,
   "longitude": -74,
   "current_weather": {
-    "temperature": 13.4,
+    "temperature": 54.3,
     "windspeed": 8.1
   }
 }
 
 
-The frontend displays this under the matched record.
+The frontend displays it directly under the matched record.
 
-API Call (Frontend → Backend)
-Query request
+Frontend → Backend API Calls
+Search Request
 fetch("https://algaib-travel-backend.hf.space/query", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ query: q })
 });
 
-Weather request
+Weather Request
 fetch("https://algaib-travel-backend.hf.space/weather", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -138,7 +163,7 @@ fetch("https://algaib-travel-backend.hf.space/weather", {
 });
 
 
-The frontend only renders what the API returns.
+The frontend simply prints what the backend responds with.
 
 Frontend Setup
 
@@ -153,7 +178,7 @@ npm run dev
 
 Backend Setup
 
-Clone your Hugging Face Space:
+Clone the Hugging Face Space:
 
 git clone https://huggingface.co/spaces/algaib/travel-backend
 
@@ -165,27 +190,32 @@ git commit -m "update backend"
 git push
 
 
-Hugging Face automatically rebuilds and redeploys.
+Hugging Face automatically rebuilds and redeploys after every push.
 
-AI Assistance:
+AI Assistance
 
-Making random documents for the data in the backend
+AI was used for:
 
-fixing broken Hugging Face builds
+key-Word boosting
 
-explaining errors in TF-IDF and JSON handling
+creating example JSON documents
 
-Helping with DOM
+fixing Hugging Face build errors
+
+explaining TF-IDF and JSON issues
+
+simplifying the DOM logic
+
+helping format this README
 
 What I Learned
 
-TF-IDF works well for small document sets
+TF-IDF works surprisingly well for small document sets
 
 Cosine similarity is simple and effective
 
-Using real APIs (geocoding + weather) wasn’t as complicated as expected
+Geocoding and weather APIs were simpler than expected
 
-JSON structure matters for consistent results
+JSON structure and wording matter for retrieval quality
 
-Keeping the frontend simple made the project easier to maintain
-
+Keeping the frontend minimal made debugging much easier
