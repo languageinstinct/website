@@ -100,7 +100,7 @@ This improves results without needing a full ML model.
 
 3. Weather API (Open-Meteo)
 
-The weather endpoint does two steps:
+The weather endpoint does two things
 
 Convert the record’s location name → latitude/longitude
 using Open-Meteo’s free geocoding API
@@ -169,6 +169,8 @@ Hugging Face automatically rebuilds and redeploys.
 
 AI Assistance:
 
+Making random documents for the data in the backend
+
 fixing broken Hugging Face builds
 
 explaining errors in TF-IDF and JSON handling
@@ -187,4 +189,3 @@ JSON structure matters for consistent results
 
 Keeping the frontend simple made the project easier to maintain
 
-Reading build logs is a real skill when using cloud platforms
