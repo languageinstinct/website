@@ -1,97 +1,136 @@
-# zaduma
+Experience Intelligence Portal
 
-_an [Astro] starter template for understated personal websites_
+INFO 452 – Final Project
+Built by Aidan Gantt
 
-**Built with:**
+Overview
 
-- [SolidJS]
-- [MDX], [Remark] and [Unified]
-- [Shiki Twoslash][shiki-twoslash]
-- [Tailwind CSS][tailwind-css]
-- Vercel and [Vercel OG][vercel-og]
-- [GitHub Actions][github-actions]
+This project is a lightweight internal search assistant designed for teams who need to quickly find specific internal records using natural language. Instead of manually looking through files, a user can type a sentence (like “find the client feedback file”) and the system returns the most relevant internal document.
 
-[astro]: https://astro.build/
-[solidjs]: https://www.solidjs.com/
-[mdx]: https://mdxjs.com/
-[remark]: https://github.com/remarkjs/remark
-[unified]: https://unifiedjs.com/
-[shiki-twoslash]: https://github.com/shikijs/twoslash
-[tailwind-css]: https://tailwindcss.com/
-[vercel-og]:
-  https://vercel.com/blog/introducing-vercel-og-image-generation-fast-dynamic-social-card-images
-[github-actions]: https://github.com/features/actions
+The project uses:
 
-## 🏎️ Usage TLDR
+a custom Astro frontend (this repo, deployed on Vercel)
 
-1. Click <kbd>Use this template</kbd> to create a new repo.
-2. Set [`VERCEL_TOKEN`], `VERCEL_PROJECT_ID`, and [`VERCEL_ORG_ID`] secrets to
-   deploy to Vercel from GHA (enables access to git history).
-3. Add `OG_IMAGE_SECRET` to secure your OG image endpoint.
+a FastAPI backend (separate Hugging Face Space)
 
-_[See full usage instructions.](#-usage)_
+a simple RAG-style retrieval pipeline using TF-IDF + cosine similarity
 
-## 🏛 Project Structure
+a collection of internal JSON records acting as the knowledge base
 
-Inside of your Astro project, you'll see the following folders and files:
+The two systems communicate through a POST API call.
 
-<pre>
-<code>
-├── posts/
-│   └── rebuilding-a-blog.mdx — <i>posts written in <a href="https://mdxjs.com/">MDX</a></i>
-├── public/ — <i>static assets apart from images</i>
-├── src/
-│   ├── build-time/* — <i>remark plugins</i>
-│   ├── global-styles/* — <i>fonts, body and prose styles</i>
-│   ├── layouts/
-│   │   ├── BaseLayout.astro — <i>UI shared between all pages</i>
-│   │   └── PostLayout.astro — <i>layout for all posts</i>
-│   ├── lib/* — <i>reusable utils and UI components</i>
-│   ├── images/* — <i>pictures (need to be here to be optimized by Astro Image)</i>
-│   ├── pages/
-│   │   ├── [path].astro — <i>Astro dynamic route for posts, supplies MDX components</i>
-│   │   └── index.astro — <i>index page, lists all posts</i>
-│   ├── env.d.ts
-│   └── types.ts
-├── astro.config.ts
-├── package.json
-├── postcss.config.cjs
-├── tailwind.config.cjs — <i>Tailwind config, colors, fonts</i>
-└── tsconfig.json
-</code>
-</pre>
+Architecture
+Frontend (Astro)            Backend (FastAPI, HF Space)
 
-## 🧞 Commands
+User types query  ->   POST /query
+Render results    <-  JSON record returned
 
-All commands are run from the root of the project, from a terminal:
+Frontend
 
-| Command                 | Action                                           |
-| :---------------------- | :----------------------------------------------- |
-| `pnpm install`          | Installs dependencies                            |
-| `pnpm run dev`          | Starts local dev server at `localhost:3000`      |
-| `pnpm run build`        | Build your production site to `./dist/`          |
-| `pnpm run preview`      | Preview your build locally, before deploying     |
-| `pnpm run astro ...`    | Run CLI commands like `astro add`, `astro check` |
-| `pnpm run astro --help` | Get help using the Astro CLI                     |
+Built in Astro
 
-## 👌 Usage
+Contains the search bar UI and JavaScript that calls the backend
 
-1. Click <kbd>Use this template</kbd> to create a new repo.
-2. Clone the repository, install with `pnpm install` and run with `pnpm dev`.
-3. Style it and personalize however you like 💅
-4. Set [`VERCEL_TOKEN`], `VERCEL_PROJECT_ID`, and [`VERCEL_ORG_ID`] secrets to
-   deploy to Vercel from GHA (what enables access to git history).
-   ([_Settings→Secrets_](https://github.com/hasparus/zaduma/settings/secrets/actions))
+Backend
 
-   - Alternatively — if all your blog posts have a `date` in frontmatter, you
-     don't need to deploy through _workflows/ci.yml_. Feel free to remove the
-     deploy steps from the YML file and connect Vercel/Netlify integration. Go
-     to `derivedTitleAndDatePlugin` function and remove `execSync("git log")`
-     from it. (TODO: Can we make it more convenient?)
+Hosted as its own Hugging Face Space (separate Git repo)
 
-5. Generate a passphrase for `OG_IMAGE_SECRET` to secure your OG image endpoint,
-   and add it to
-   [Actions Secrets](<(https://github.com/hasparus/zaduma/settings/secrets/actions)>).
+Loads JSON files, vectorizes them, runs similarity search, and returns the best match
 
-[`vercel_token`]: https://vercel.com/account/tokens
-[`vercel_org_id`]: https://vercel.com/account#your-id
+Endpoint:
+
+https://huggingface.co/spaces/algaib/travel-backend
+
+How the System Works
+1. Data
+
+Internal records are stored as .json files in the backend:
+
+{
+  "title": "client feedback summary",
+  "category": "feedback",
+  "text": "summary of comments from the client regarding...",
+  "location": "region a"
+}
+
+2. RAG Retrieval Logic
+
+The backend uses:
+
+TfidfVectorizer (scikit-learn)
+
+cosine_similarity
+
+a small keyword-boosting rule
+
+This creates a simple, explainable retrieval system based on the content of the documents.
+
+3. API Call
+
+The frontend sends a POST request:
+
+fetch("https://algaib-travel-backend.hf.space/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+
+
+The backend responds with:
+
+{
+  "type": "blog",
+  "title": "...",
+  "text": "...",
+  "location": "..."
+}
+
+
+The frontend renders that on the page.
+
+Frontend Setup
+Install Dependencies
+npm install
+
+Run Dev Server
+npm run dev
+
+
+Make sure the frontend is pointing to the correct backend URL.
+
+Backend Setup (Hugging Face Space)
+
+The backend is its own repo inside Hugging Face Spaces.
+To modify it:
+
+git clone https://huggingface.co/spaces/algaib/travel-backend
+
+
+Then:
+
+git add .
+git commit -m "update backend"
+git push
+
+
+HF auto-redeploys.
+
+AI Assistance 
+
+AI was used during development to:
+
+debug failing Hugging Face builds
+
+guide troubleshooting when deployments broke
+
+
+What I Learned
+
+retrieval systems don’t need heavy ML models
+
+TF-IDF + cosine similarity is more effective than I expected
+
+small changes to JSON data structure massively impact results
+
+frontend/backend communication needs clean, consistent JSON
+
+simplifying a system usually improves it
