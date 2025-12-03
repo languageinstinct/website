@@ -167,21 +167,13 @@ git push
 
 Hugging Face automatically rebuilds and redeploys.
 
-AI Assistance Disclosure
-
-AI (ChatGPT) was used for:
+AI Assistance:
 
 fixing broken Hugging Face builds
 
 explaining errors in TF-IDF and JSON handling
 
-helping rewrite the search logic more cleanly
-
-helping design the /weather workflow
-
-writing drafts of this README
-
-All project decisions, data design, and final debugging were done by me.
+Helping with DOM
 
 What I Learned
 
