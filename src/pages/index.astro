@@ -1,151 +1,133 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { formatDate } from "../lib/formatDate";
-import { Link } from "../lib/Link";
 import { Paragraph } from "../lib/prose/Paragraph";
-import type { PostFrontmatter } from "../types";
-
-let posts = await Astro.glob<PostFrontmatter>("../../posts/**/*.mdx");
-
-if (import.meta.env.PROD) {
-  posts = posts.filter((post) => !post.frontmatter.draft);
-}
-
-posts.sort((a, b) => {
-  return (
-    new Date(b.frontmatter.date).getTime() -
-    new Date(a.frontmatter.date).getTime()
-  );
-});
 ---
 
 <BaseLayout
-  title="AidanGantt"
-  description="My personal website "
+  title="Experience Intelligence Portal"
+  description="Internal portal for business teams to search and retrieve curated experience records and insights."
 >
-  <h1 slot="header-content" class="text-gray-600 dark:text-gray-500">aidan</h1>
+  <h1 slot="header-content" class="text-gray-600 dark:text-gray-500">
+    Experience Intelligence Portal
+  </h1>
+
   <main class="py-10 zaduma-prose">
     <Paragraph>
-      <small class="text-gray-600 dark:text-gray-500">IPA: /ˈeɪdən/</small>
-      <br />
-      Hello, I'm <strong>Aidan</strong>. I made this small website. I am a 22 y/o
-      <strong>Information Systems</strong> undergrad student. I enjoy learning,
-      traveling, photography, reading, and problem-solving.
+      This portal acts as a business-facing knowledge system for organizing and
+      retrieving curated experience records, locations, and insights. It is
+      intended for use by client-facing teams, account managers, or operations
+      groups who need fast access to reliable information when responding to
+      inquiries or planning engagements.
     </Paragraph>
 
     <blockquote>
-      "An investment in knowledge pays the best interest."
-      <footer>&mdash; Benjamin Franklin</footer>
+      "Accurate information is the foundation of good decision-making."
+      <footer>&mdash; Internal Operations Principle</footer>
     </blockquote>
 
-    <Paragraph></Paragraph>
+    <Paragraph>
+      Instead of manually searching through scattered notes or documents, teams
+      can use this portal to query an internal experience database. The system
+      surfaces the most relevant write-ups and supporting context (such as
+      weather or other conditions), helping organizations answer questions
+      quickly and keep their communication consistent and professional.
+    </Paragraph>
+
+    <section class="py-12 border-t border-gray-300 dark:border-gray-700 mt-12">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+        Experience Search Interface (Internal Use)
+      </h2>
+      <p class="mb-4 text-gray-600 dark:text-gray-400">
+        This search bar lets company teams query internal experience records
+        like a lightweight knowledge base. Type a business-style or client-style
+        request (for example:
+        <em>"client wants a spa day"</em>,
+        <em>"need a casual cafe near a park"</em>, or
+        <em>"sample activities around a stadium"</em>). The system scans the
+        curated records and returns the closest matching brief, along with
+        optional supporting information to help with planning and client calls.
+      </p>
+
+      <div class="flex flex-col gap-4 max-w-xl">
+        <input
+          id="query"
+          type="text"
+          placeholder="Search internal experience records..."
+          class="border border-gray-400 rounded-md p-2 dark:bg-gray-800 dark:text-gray-100"
+        />
+        <button
+          onclick="askAI()"
+          class="bg-gray-900 text-white py-2 rounded-md hover:bg-gray-700 transition"
+        >
+          Search Internal Records
+        </button>
+        <div id="output" class="mt-6 space-y-4"></div>
+      </div>
+    </section>
   </main>
 
-  <ul>
-    {
-      posts.map(({ frontmatter }) => {
-        const date = new Date(frontmatter.date);
-        return (
-          <li>
-            <Link
-              href={frontmatter.path}
-              class="flex flex-row gap-2 justify-between"
-              noUnderline
-            >
-              <h2 class="text-gray-800 dark:text-gray-300 font-sans">
-                {frontmatter.title}
-              </h2>
-              <time
-                datetime={date.toISOString()}
-                class="text-gray-600 dark:text-gray-400 tabular-nums tracking-tighter shrink-0"
-              >
-                {formatDate(date)}
-              </time>
-            </Link>
-          </li>
-        );
-      })
-    }
-  </ul>
+  <script is:inline>
+    window.askAI = async function () {
+      const q = document.getElementById("query").value.trim();
+      const output = document.getElementById("output");
 
-  <!-- AI Section -->
-  <section class="py-12 border-t border-gray-300 dark:border-gray-700 mt-12">
-    <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
-      Discover Korea with AI
-    </h2>
-    <p class="mb-4 text-gray-600 dark:text-gray-400">
-      Type something you want to do in Korea (e.g., spa, cafe, park) and my site
-      will show one of my blog posts. You can then ask about the weather for your trip.
-    </p>
-
-    <div class="flex flex-col gap-4 max-w-xl">
-      <input
-        id="query"
-        type="text"
-        placeholder="Try: spa"
-        class="border border-gray-400 rounded-md p-2 dark:bg-gray-800 dark:text-gray-100"
-      />
-      <button
-        onclick="askAI()"
-        class="bg-gray-900 text-white py-2 rounded-md hover:bg-gray-700 transition"
-      >
-        Search
-      </button>
-      <div id="output" class="mt-6 space-y-4"></div>
-    </div>
-  </section>
-
-<script is:inline>
-  window.askAI = async function() {
-    const q = document.getElementById("query").value.trim();
-    const output = document.getElementById("output");
-
-    if (!q) {
-      output.innerHTML = "Please type something first.";
-      return;
-    }
-
-    output.innerHTML = "Thinking...";
-
-    try {
-      const res = await fetch("https://algaib-travel-backend.hf.space/query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        output.innerHTML = `Error ${res.status}: ${txt}`;
+      if (!q) {
+        output.innerHTML =
+          "Please enter a business-style or client-style request to search internal records.";
         return;
       }
 
-      const data = await res.json();
-      console.log("Response data:", data); // <- logs backend data to console
+      output.innerHTML = "Searching internal experience records...";
 
-      if (data.type === "blog") {
-        output.innerHTML = `
-          <h3 class="text-xl font-semibold">${data.title}</h3>
-          <p class="text-gray-700 dark:text-gray-300 mt-2">${data.text}</p>
-          <img src="/images/${data.image}" alt="${data.title}" 
-     class="rounded-md w-full max-w-md mt-4 mx-auto block">`;
-      } else if (data.type === "weather") {
-        output.innerHTML = `
-          <p class="text-gray-700 dark:text-gray-300 mt-2">
-            <strong>Weather:</strong> ${data.content}
-          </p>`;
-      } else {
-        output.innerHTML = "No response.";
+      try {
+        const res = await fetch("https://algaib-travel-backend.hf.space/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          output.innerHTML = `Error ${res.status}: ${txt}`;
+          return;
+        }
+
+        const data = await res.json();
+        console.log("Response data:", data);
+
+        if (data.type === "blog") {
+          output.innerHTML = `
+            <h3 class="text-xl font-semibold">Matched Experience Record</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              Retrieved internal brief:
+            </p>
+            <h4 class="text-lg font-semibold">${data.title}</h4>
+            <p class="text-gray-700 dark:text-gray-300 mt-2">
+              ${data.text}
+            </p>
+            <img
+              src="/images/${data.image}"
+              alt="${data.title}"
+              class="rounded-md w-full max-w-md mt-4 mx-auto block"
+            >
+          `;
+        } else if (data.type === "weather") {
+          output.innerHTML = `
+            <h3 class="text-xl font-semibold">Supporting Information</h3>
+            <p class="text-gray-700 dark:text-gray-300 mt-2">
+              <strong>Context for planning:</strong> ${data.content}
+            </p>
+          `;
+        } else {
+          output.innerHTML =
+            "No useful record found. Try rephrasing the request or using more specific details.";
+        }
+      } catch (err) {
+        console.error(err);
+        output.innerHTML = `Error: ${err}`;
       }
-    } catch (err) {
-      console.error(err);
-      output.innerHTML = `Error: ${err}`;
-    }
-  }
-</script>
-
-
-
+    };
+  </script>
 
   <style>
     ul:hover li:not(:hover) :where(h2, time) {
