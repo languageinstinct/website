@@ -1,97 +1,198 @@
-# zaduma
+Experience Intelligence Portal
 
-_an [Astro] starter template for understated personal websites_
+INFO 452 – Final Project
+Built by Aidan Gantt
 
-**Built with:**
+Overview
 
-- [SolidJS]
-- [MDX], [Remark] and [Unified]
-- [Shiki Twoslash][shiki-twoslash]
-- [Tailwind CSS][tailwind-css]
-- Vercel and [Vercel OG][vercel-og]
-- [GitHub Actions][github-actions]
+This project is a lightweight internal search assistant. A user can type a natural sentence like “find the client feedback file” or “show me the support ticket notes”, and the system returns the closest matching internal record.
 
-[astro]: https://astro.build/
-[solidjs]: https://www.solidjs.com/
-[mdx]: https://mdxjs.com/
-[remark]: https://github.com/remarkjs/remark
-[unified]: https://unifiedjs.com/
-[shiki-twoslash]: https://github.com/shikijs/twoslash
-[tailwind-css]: https://tailwindcss.com/
-[vercel-og]:
-  https://vercel.com/blog/introducing-vercel-og-image-generation-fast-dynamic-social-card-images
-[github-actions]: https://github.com/features/actions
+The backend reads a collection of JSON “internal documents,” searches through them with TF-IDF + cosine similarity, and returns the best match.
+After a record is found, the system automatically pulls live weather data for the location listed in that record.
 
-## 🏎️ Usage TLDR
+The final output shows:
 
-1. Click <kbd>Use this template</kbd> to create a new repo.
-2. Set [`VERCEL_TOKEN`], `VERCEL_PROJECT_ID`, and [`VERCEL_ORG_ID`] secrets to
-   deploy to Vercel from GHA (enables access to git history).
-3. Add `OG_IMAGE_SECRET` to secure your OG image endpoint.
+the best-matching record
 
-_[See full usage instructions.](#-usage)_
+the record’s location
 
-## 🏛 Project Structure
+live weather at that location
 
-Inside of your Astro project, you'll see the following folders and files:
+Components Used
 
-<pre>
-<code>
-├── posts/
-│   └── rebuilding-a-blog.mdx — <i>posts written in <a href="https://mdxjs.com/">MDX</a></i>
-├── public/ — <i>static assets apart from images</i>
-├── src/
-│   ├── build-time/* — <i>remark plugins</i>
-│   ├── global-styles/* — <i>fonts, body and prose styles</i>
-│   ├── layouts/
-│   │   ├── BaseLayout.astro — <i>UI shared between all pages</i>
-│   │   └── PostLayout.astro — <i>layout for all posts</i>
-│   ├── lib/* — <i>reusable utils and UI components</i>
-│   ├── images/* — <i>pictures (need to be here to be optimized by Astro Image)</i>
-│   ├── pages/
-│   │   ├── [path].astro — <i>Astro dynamic route for posts, supplies MDX components</i>
-│   │   └── index.astro — <i>index page, lists all posts</i>
-│   ├── env.d.ts
-│   └── types.ts
-├── astro.config.ts
-├── package.json
-├── postcss.config.cjs
-├── tailwind.config.cjs — <i>Tailwind config, colors, fonts</i>
-└── tsconfig.json
-</code>
-</pre>
+Astro frontend (this repo)
 
-## 🧞 Commands
+FastAPI backend (Hugging Face Space)
 
-All commands are run from the root of the project, from a terminal:
+TF-IDF + cosine similarity (manual RAG-style retrieval)
 
-| Command                 | Action                                           |
-| :---------------------- | :----------------------------------------------- |
-| `pnpm install`          | Installs dependencies                            |
-| `pnpm run dev`          | Starts local dev server at `localhost:3000`      |
-| `pnpm run build`        | Build your production site to `./dist/`          |
-| `pnpm run preview`      | Preview your build locally, before deploying     |
-| `pnpm run astro ...`    | Run CLI commands like `astro add`, `astro check` |
-| `pnpm run astro --help` | Get help using the Astro CLI                     |
+JSON files acting as the document bank
 
-## 👌 Usage
+Weather API using Open-Meteo (geocoding + forecast)
 
-1. Click <kbd>Use this template</kbd> to create a new repo.
-2. Clone the repository, install with `pnpm install` and run with `pnpm dev`.
-3. Style it and personalize however you like 💅
-4. Set [`VERCEL_TOKEN`], `VERCEL_PROJECT_ID`, and [`VERCEL_ORG_ID`] secrets to
-   deploy to Vercel from GHA (what enables access to git history).
-   ([_Settings→Secrets_](https://github.com/hasparus/zaduma/settings/secrets/actions))
+The frontend and backend communicate using a simple POST API.
 
-   - Alternatively — if all your blog posts have a `date` in frontmatter, you
-     don't need to deploy through _workflows/ci.yml_. Feel free to remove the
-     deploy steps from the YML file and connect Vercel/Netlify integration. Go
-     to `derivedTitleAndDatePlugin` function and remove `execSync("git log")`
-     from it. (TODO: Can we make it more convenient?)
+Architecture
+Frontend
 
-5. Generate a passphrase for `OG_IMAGE_SECRET` to secure your OG image endpoint,
-   and add it to
-   [Actions Secrets](<(https://github.com/hasparus/zaduma/settings/secrets/actions)>).
+Shows the search bar
 
-[`vercel_token`]: https://vercel.com/account/tokens
-[`vercel_org_id`]: https://vercel.com/account#your-id
+Sends the query to the backend’s /query endpoint
+
+Displays the matched document
+
+Automatically calls /weather using the returned location
+
+Backend
+
+Loads all JSON documents on startup
+
+Creates a TF-IDF matrix once
+
+Uses cosine similarity for search
+
+Light keyword-boosting rules for better accuracy
+
+Weather endpoint uses geocoding + live forecast
+
+API Endpoints
+POST /query     → returns matched internal record
+POST /weather   → returns live weather for that record’s location
+
+
+Backend URL:
+https://algaib-travel-backend.hf.space
+
+How the System Works
+1. Data (JSON Files)
+
+Each internal record looks like:
+
+{
+  "title": "client feedback summary",
+  "category": "feedback",
+  "text": "summary of comments from the client...",
+  "location": "New York"
+}
+
+
+These are loaded once at startup and stored in memory.
+
+2. RAG-Style Retrieval (TF-IDF + Cosine Similarity)
+
+The backend uses:
+
+TfidfVectorizer(stop_words="english")
+
+vectorizer.fit_transform(docs)
+
+cosine_similarity(query_vector, X)
+
+There are small keyword boosts:
+
+“client + feedback” → feedback docs
+
+“support + ticket” → support docs
+
+“training + session” → training docs
+
+This improves results without needing a full ML model.
+
+3. Weather API (Open-Meteo)
+
+The weather endpoint does two steps:
+
+Convert the record’s location name → latitude/longitude
+using Open-Meteo’s free geocoding API
+
+Use those coordinates to request current weather data
+
+Example returned JSON:
+
+{
+  "location": "New York",
+  "latitude": 40.7,
+  "longitude": -74,
+  "current_weather": {
+    "temperature": 13.4,
+    "windspeed": 8.1
+  }
+}
+
+
+The frontend displays this under the matched record.
+
+API Call (Frontend → Backend)
+Query request
+fetch("https://algaib-travel-backend.hf.space/query", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ query: q })
+});
+
+Weather request
+fetch("https://algaib-travel-backend.hf.space/weather", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ location })
+});
+
+
+The frontend only renders what the API returns.
+
+Frontend Setup
+
+Install:
+
+npm install
+
+
+Run locally:
+
+npm run dev
+
+Backend Setup
+
+Clone your Hugging Face Space:
+
+git clone https://huggingface.co/spaces/algaib/travel-backend
+
+
+To update:
+
+git add .
+git commit -m "update backend"
+git push
+
+
+Hugging Face automatically rebuilds and redeploys.
+
+AI Assistance Disclosure
+
+AI (ChatGPT) was used for:
+
+fixing broken Hugging Face builds
+
+explaining errors in TF-IDF and JSON handling
+
+helping rewrite the search logic more cleanly
+
+helping design the /weather workflow
+
+writing drafts of this README
+
+All project decisions, data design, and final debugging were done by me.
+
+What I Learned
+
+TF-IDF works well for small document sets
+
+Cosine similarity is simple and effective
+
+Using real APIs (geocoding + weather) wasn’t as complicated as expected
+
+JSON structure matters for consistent results
+
+Keeping the frontend simple made the project easier to maintain
+
+Reading build logs is a real skill when using cloud platforms
