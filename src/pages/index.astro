@@ -5,7 +5,7 @@ import { Paragraph } from "../lib/prose/Paragraph";
 
 <BaseLayout
   title="Experience Search Portal"
-  description="Simple internal tool for searching example experience records with an AI backend."
+  description="Simple internal tool for searching example experience records with an AI-style backend."
 >
   <h1 slot="header-content" class="text-gray-600 dark:text-gray-500">
     Experience Search Portal
@@ -13,25 +13,27 @@ import { Paragraph } from "../lib/prose/Paragraph";
 
   <main class="py-10 zaduma-prose">
     <Paragraph>
-      This page hits my backend API and pulls whatever internal record is the
-      closest match. The backend reads a bunch of JSON files and does the
-      similarity stuff.
+      This page sends whatever you type into the search bar to my backend API.
+      The backend loads JSON files, turns them into vectors using tf-idf, and
+      finds the closest matching record.
     </Paragraph>
 
     <Paragraph>
-      When you search, the backend returns a title, text, and a location.
-      Location matters because I added a second component that fetches live
-      weather using that location.
+      Each record also has a location field. Right after the record is found,
+      the page automatically calls the weather endpoint using that location
+      and displays the live weather.
     </Paragraph>
 
     <section class="py-8 border-t border-gray-300 dark:border-gray-700 mt-10">
       <h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
         Search Internal Records
       </h2>
+
       <p class="mb-4 text-gray-600 dark:text-gray-400">
-        Try something like: <em>"client feedback"</em>,
+        Try queries like <em>"client feedback"</em>,
         <em>"support ticket"</em>, or <em>"training session"</em>.  
-        The backend will find the closest record out of the files I gave it.
+        The backend compares your text against its stored JSON files and
+        returns the closest match.
       </p>
 
       <div class="flex flex-col gap-4 max-w-xl">
@@ -43,133 +45,94 @@ import { Paragraph } from "../lib/prose/Paragraph";
           class="border border-gray-400 rounded-md p-2 dark:bg-gray-800 dark:text-gray-100"
         />
 
-        <!-- button that triggers the backend search -->
+        <!-- button that triggers everything -->
         <button
           onclick="askAI()"
           class="bg-gray-900 text-white py-2 rounded-md hover:bg-gray-700 transition"
         >
-          Run Search
+          run search
         </button>
 
-        <!-- where results show up -->
+        <!-- where everything shows up -->
         <div id="output" class="mt-6 space-y-4"></div>
       </div>
     </section>
   </main>
 
-  <script is:inline>
-    const BACKEND_URL = "https://algaib-travel-backend.hf.space";
+<script is:inline>
+  const BACKEND_URL = "https://algaib-travel-backend.hf.space";
 
-    // store the last matched record so the weather tool can use its location
-    let lastResult = null;
+  window.askAI = async function () {
+    const q = document.getElementById("query").value.trim();
+    const output = document.getElementById("output");
 
-    // runs the RAG query endpoint
-    window.askAI = async function () {
-      const q = document.getElementById("query").value.trim();
-      const output = document.getElementById("output");
+    if (!q) {
+      output.textContent = "please enter a query.";
+      return;
+    }
 
-      if (!q) {
-        output.innerHTML = "Please enter a query.";
+    output.textContent = "searching...";
+
+    try {
+      // main query
+      const res = await fetch(`${BACKEND_URL}/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+
+      const data = await res.json();
+
+      if (data.type !== "blog") {
+        output.textContent = "no matching record found.";
         return;
       }
 
-      output.innerHTML = "Searching internal records...";
-      lastResult = null;
+      // basic record display card
+      output.innerHTML = `
+        <div class="p-4 border border-gray-300 dark:border-gray-700 rounded-md">
+          <h3 class="text-xl font-semibold mb-2">${data.title}</h3>
+          <p class="mb-2">${data.text}</p>
+          <p class="text-gray-600 dark:text-gray-400">
+            <strong>location:</strong> ${data.location || "none"}
+          </p>
+        </div>
 
-      try {
-        const res = await fetch(`${BACKEND_URL}/query`, {
+        <div id="weather-box" class="mt-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md">
+          loading weather...
+        </div>
+      `;
+
+      // auto weather if location exists
+      if (data.location && data.location !== "none") {
+        const weatherRes = await fetch(`${BACKEND_URL}/weather`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: q }),
+          body: JSON.stringify({ location: data.location }),
         });
 
-        if (!res.ok) {
-          const txt = await res.text();
-          output.innerHTML = `Error ${res.status}: ${txt}`;
-          return;
-        }
+        const weather = await weatherRes.json();
 
-        const data = await res.json();
-        lastResult = data;
+        const box = document.getElementById("weather-box");
 
-        // format the result for display
-        if (data.type === "blog") {
-          const loc = data.location && data.location !== "none"
-            ? data.location
-            : "Not specified";
-
-          output.innerHTML = `
-            <h3 class="text-xl font-semibold">Matched Record</h3>
-            <h4 class="text-lg font-semibold">${data.title}</h4>
-            <p class="text-gray-700 dark:text-gray-300 mt-2">
-              ${data.text}
-            </p>
-
-            <p class="text-gray-600 dark:text-gray-400 mt-2">
-              <strong>Location:</strong> ${loc}
-            </p>
-
-            ${
-              loc !== "Not specified"
-                ? `<button
-                     onclick="getWeather()"
-                     class="mt-3 bg-gray-900 text-white py-2 px-3 rounded-md hover:bg-gray-700 transition"
-                   >
-                     Get weather for this location
-                   </button>`
-                : ""
-            }
-
-            <div id="weather-output" class="mt-4"></div>
-
-            <hr class="my-4 border-gray-300 dark:border-gray-700" />
-          `;
+        if (weather.error) {
+          box.textContent = "weather error: " + weather.error;
         } else {
-          output.innerHTML = "No matching record found.";
+          box.innerHTML = `
+            <h4 class="text-lg font-semibold mb-2">current weather</h4>
+            <p>temperature: ${weather.current_weather.temperature}°C</p>
+            <p>wind speed: ${weather.current_weather.windspeed} km/h</p>
+          `;
         }
-      } catch (err) {
-        console.error(err);
-        output.innerHTML = `Error: ${err}`;
       }
-    };
+    } catch (err) {
+      output.textContent = "error: " + err;
+    }
+  };
+</script>
 
-    // calls the weather tool using the record’s location
-    window.getWeather = async function () {
-      const weatherDiv = document.getElementById("weather-output");
 
-      if (!lastResult || !lastResult.location || lastResult.location === "none") {
-        weatherDiv.innerHTML = "No valid location.";
-        return;
-      }
 
-      weatherDiv.innerHTML = "Getting weather...";
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/weather`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ location: lastResult.location }),
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-          weatherDiv.innerHTML = `Error: ${data.error}`;
-          return;
-        }
-
-        // display weather data in a simple way
-        weatherDiv.innerHTML = `
-          <h4 class="text-lg font-semibold">Current Weather</h4>
-          <p>Temperature: ${data.current_weather.temperature}°C</p>
-          <p>Wind Speed: ${data.current_weather.windspeed} km/h</p>
-        `;
-      } catch (err) {
-        console.error(err);
-        weatherDiv.innerHTML = `Error: ${err}`;
-      }
-    };
-  </script>
 
   <style>
     ul:hover li:not(:hover) :where(h2, time) {
